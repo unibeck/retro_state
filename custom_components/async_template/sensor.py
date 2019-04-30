@@ -13,9 +13,10 @@ from homeassistant.const import (
     CONF_SENSORS, EVENT_HOMEASSISTANT_START, CONF_FRIENDLY_NAME_TEMPLATE,
     MATCH_ALL, CONF_DEVICE_CLASS)
 from .const import (CONF_LAST_CHANGED_TEMPLATE, CONF_LAST_UPDATED_TEMPLATE)
+
+from custom_components.async_template.async_entity import AsyncEntity, async_generate_entity_id
 from homeassistant.exceptions import TemplateError
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity, async_generate_entity_id
 from homeassistant.helpers.event import async_track_state_change
 import homeassistant.util.dt as dt_util
 
@@ -120,7 +121,7 @@ async def async_setup_platform(hass, config, async_add_entities,
     return True
 
 
-class SensorAsyncTemplate(Entity):
+class SensorAsyncTemplate(AsyncEntity):
     """Representation of a Async Template Sensor."""
 
     def __init__(self, hass, device_id, friendly_name, friendly_name_template,
