@@ -1,0 +1,8 @@
+{
+  "domain": "async_template",
+  "name": "Async Template",
+  "documentation": "https://gitlab.com/jbeckman/retro_state/blob/master/README.md",
+  "dependencies": [],
+  "codeowners": ["@jbeckman"],
+  "requirements": []
+}
