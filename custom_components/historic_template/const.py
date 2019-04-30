@@ -1,10 +1,10 @@
 """Constants for blueprint."""
 # Base component constants
-DOMAIN = "async_template"
+DOMAIN = "historic_template"
 DOMAIN_DATA = "{}_data".format(DOMAIN)
 VERSION = "1.0.0"
 PLATFORMS = ["sensor"]
-REQUIRED_FILES = ["const.py", "sensor.py"]
+REQUIRED_FILES = ["const.py", "sensor.py", "historic_entity.py"]
 ISSUE_URL = "https://github.com/custom-components/blueprint/issues"
 
 STARTUP = """

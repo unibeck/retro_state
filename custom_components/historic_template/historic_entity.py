@@ -56,8 +56,8 @@ def async_generate_entity_id(entity_id_format: str, name: Optional[str],
         entity_id_format.format(slugify(name)), current_ids)
 
 
-class AsyncEntity:
-    """An abstract class for async entities."""
+class HistoricEntity:
+    """An abstract class for historic entities."""
 
     # SAFE TO OVERWRITE
     # The properties and methods here are safe to overwrite when inheriting
@@ -501,7 +501,7 @@ def state_async_set(self, entity_id: str, new_state: Any,
     }, EventOrigin.local, context)
 
 
-class ToggleEntity(AsyncEntity):
+class ToggleEntity(HistoricEntity):
     """An abstract class for entities that can be turned on and off."""
 
     @property

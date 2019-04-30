@@ -1,4 +1,4 @@
-"""Sensor platform for blueprint."""
+"""Sensor platform for historic_template."""
 import logging
 from typing import Optional
 
@@ -14,7 +14,7 @@ from homeassistant.const import (
     MATCH_ALL, CONF_DEVICE_CLASS)
 from .const import (CONF_LAST_CHANGED_TEMPLATE, CONF_LAST_UPDATED_TEMPLATE)
 
-from custom_components.async_template.async_entity import AsyncEntity, async_generate_entity_id
+from custom_components.historic_template.historic_entity import HistoricEntity, async_generate_entity_id
 from homeassistant.exceptions import TemplateError
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_state_change
@@ -42,7 +42,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 async def async_setup_platform(hass, config, async_add_entities,
                                discovery_info=None):
-    """Set up the async template sensors."""
+    """Set up the historic template sensors."""
     sensors = []
 
     for device, device_config in config[CONF_SENSORS].items():
@@ -88,7 +88,7 @@ async def async_setup_platform(hass, config, async_add_entities,
 
         if invalid_templates:
             _LOGGER.warning(
-                'Async Template sensor %s has no entity ids configured to track nor'
+                'Historic Template sensor %s has no entity ids configured to track nor'
                 ' were we able to extract the entities to track from the %s '
                 'template(s). This entity will only be able to be updated '
                 'manually.', device, ', '.join(invalid_templates))
@@ -99,7 +99,7 @@ async def async_setup_platform(hass, config, async_add_entities,
             entity_ids = list(entity_ids)
 
         sensors.append(
-            SensorAsyncTemplate(
+            SensorHistoricTemplate(
                 hass,
                 device,
                 friendly_name,
@@ -121,8 +121,8 @@ async def async_setup_platform(hass, config, async_add_entities,
     return True
 
 
-class SensorAsyncTemplate(AsyncEntity):
-    """Representation of a Async Template Sensor."""
+class SensorHistoricTemplate(HistoricEntity):
+    """Representation of a Historic Template Sensor."""
 
     def __init__(self, hass, device_id, friendly_name, friendly_name_template,
                  unit_of_measurement, state_template, last_changed_template,
@@ -157,7 +157,7 @@ class SensorAsyncTemplate(AsyncEntity):
 
         @callback
         def template_sensor_startup(event):
-            """Update async template on startup."""
+            """Update historic template on startup."""
             if self._entities != MATCH_ALL:
                 # Track state change only for valid templates
                 async_track_state_change(
