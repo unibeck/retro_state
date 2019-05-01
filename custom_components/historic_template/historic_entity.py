@@ -483,9 +483,12 @@ def state_async_set(self, entity_id: str, new_state: Any,
     # TODO: Determine if this call gets the most recent state or the last one to be updated
     # Which because of this component they are no longer the same.
     old_state = self._states.get(entity_id)
+
     if old_state is None:
         last_changed = None
     else:
+        _LOGGER.info("Old state's state is [%s]", old_state.state)
+        _LOGGER.info("Old state's last_changed is [%s]", old_state.last_changed)
         last_changed = last_changed
 
     if context is None:
@@ -493,7 +496,14 @@ def state_async_set(self, entity_id: str, new_state: Any,
 
     state = State(entity_id, new_state, attributes,
                   last_changed, last_updated, context)
-    self._states[entity_id] = state
+
+    # Only update the latest state if there was no previous state or
+    # if the new state is more recent than the current state
+    if not old_state:
+        self._states[entity_id] = state
+    elif old_state.last_updated and last_updated and old_state.last_updated < last_updated:
+        self._states[entity_id] = state
+
     self._bus.async_fire(EVENT_STATE_CHANGED, {
         'entity_id': entity_id,
         'old_state': old_state,
