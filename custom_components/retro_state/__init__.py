@@ -9,8 +9,8 @@ import os
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.helpers import discovery
 
+from . import recorder as retro_recorder
 from .const import (
     DOMAIN_DATA,
     DOMAIN,
@@ -29,7 +29,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Optional(CONF_RECORDER_INTEGRATION, default=True): cv.boolean
+                vol.Optional(CONF_RECORDER_INTEGRATION, default=False): cv.boolean
             }
         )
     },
@@ -38,9 +38,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass, config):
-    """Set up this component."""
-
-    # Print startup message
+    """Set up retro_state and all of the enabled integrations"""
     startup = STARTUP.format(name=DOMAIN, version=VERSION, issueurl=ISSUE_URL)
     _LOGGER.info(startup)
 
@@ -52,7 +50,9 @@ async def async_setup(hass, config):
     # Create DATA dict
     hass.data[DOMAIN_DATA] = {}
 
-    # Load platforms
+    if not PLATFORMS:
+        _LOGGER.warning("You have enabled {}, but not any integrations.".format(DOMAIN))
+
     for platform in PLATFORMS:
         # Get platform specific configuration
         platform_config = config[DOMAIN].get(platform, {})
@@ -61,13 +61,18 @@ async def async_setup(hass, config):
         if not platform_config:
             continue
 
-        _LOGGER.critical(platform_config)
-        hass.async_create_task(
-            discovery.async_load_platform(
-                hass, platform, DOMAIN, platform_config, config
-            )
-        )
+        setup_integration(hass, config, platform, platform_config)
+
     return True
+
+
+def setup_integration(hass, config, platform, platform_config):
+    _LOGGER.info("The {} integration for {} is enabled. Setting it up".format(platform, DOMAIN))
+
+    if platform == "recorder":
+        retro_recorder.setup(hass, config)
+    else:
+        _LOGGER.warning("{} has not implemented the integration {}".format(DOMAIN, platform))
 
 
 async def check_files(hass):

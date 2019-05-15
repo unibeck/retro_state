@@ -1,6 +1,6 @@
-"""Constants for retro_sync."""
+"""Constants for retro_state."""
 # Base component constants
-DOMAIN = "retro_sync"
+DOMAIN = "retro_state"
 DOMAIN_DATA = "{}_data".format(DOMAIN)
 VERSION = "1.0.0"
 PLATFORMS = [
