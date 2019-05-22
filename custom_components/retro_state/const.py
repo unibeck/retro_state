@@ -24,7 +24,7 @@ If you have any issues with this you need to open an issue here:
 """
 
 # Operational
-
+EVENT_HISTORIC_STATE_CHANGED = 'historic_state_changed'
 
 # Icons
 ICON = "mdi:database-refresh"

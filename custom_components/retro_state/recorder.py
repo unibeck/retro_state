@@ -18,6 +18,8 @@ from homeassistant.const import (
 from homeassistant.core import CoreState, callback, HomeAssistant
 from sqlalchemy import exc
 
+from .const import EVENT_HISTORIC_STATE_CHANGED
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -170,7 +172,8 @@ def _run(self):
                         _LOGGER.warning(
                             "Event is not JSON serializable: %s", event)
 
-                    if event.event_type == EVENT_STATE_CHANGED:
+                    if event.event_type == EVENT_STATE_CHANGED or \
+                            event.event_type == EVENT_HISTORIC_STATE_CHANGED:
                         try:
                             dbstate = States.from_event(event)
                             dbstate.event_id = dbevent.event_id

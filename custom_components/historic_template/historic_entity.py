@@ -1,10 +1,11 @@
 """An abstract class for entities."""
 import datetime
-import logging
 import functools as ft
+import logging
 from timeit import default_timer as timer
 from typing import Optional, Any, List, Iterable, Dict
 
+from homeassistant.config import DATA_CUSTOMIZE
 from homeassistant.const import (
     ATTR_ASSUMED_STATE, ATTR_FRIENDLY_NAME, ATTR_HIDDEN, ATTR_ICON,
     ATTR_UNIT_OF_MEASUREMENT, DEVICE_DEFAULT_NAME, STATE_OFF, STATE_ON,
@@ -12,11 +13,12 @@ from homeassistant.const import (
     ATTR_ENTITY_PICTURE, ATTR_SUPPORTED_FEATURES, ATTR_DEVICE_CLASS,
     EVENT_STATE_CHANGED)
 from homeassistant.core import HomeAssistant, callback, State, Context, EventOrigin
-from homeassistant.config import DATA_CUSTOMIZE
 from homeassistant.exceptions import NoEntitySpecifiedError
+from homeassistant.util import dt as dt_util
 from homeassistant.util import ensure_unique_string, slugify
 from homeassistant.util.async_ import run_callback_threadsafe
-from homeassistant.util import dt as dt_util
+
+from custom_components.retro_state.const import EVENT_HISTORIC_STATE_CHANGED
 
 _LOGGER = logging.getLogger(__name__)
 SLOW_UPDATE_WARNING = 10
@@ -331,11 +333,7 @@ class HistoricEntity:
             self._context = None
             self._context_set = None
 
-        # Yes, this is a hack. This is the most maintainable way to keep all the original
-        # functionally of a state, with the addition of manually setting last_changed and last_updated.
-        # Debugging will be hard with this in place
         self.hass.states.historic_async_set = ft.partial(state_async_set, self.hass.states)
-
         self.hass.states.historic_async_set(
             self.entity_id, state, attr, self._context,
             self.last_changed, self.last_updated)
@@ -479,16 +477,11 @@ def state_async_set(self, entity_id: str, new_state: Any,
     entity_id = entity_id.lower()
     new_state = str(new_state)
     attributes = attributes or {}
-
-    # TODO: Determine if this call gets the most recent state or the last one to be updated
-    # Which because of this component they are no longer the same.
     old_state = self._states.get(entity_id)
 
     if old_state is None:
         last_changed = None
     else:
-        _LOGGER.info("Old state's state is [%s]", old_state.state)
-        _LOGGER.info("Old state's last_changed is [%s]", old_state.last_changed)
         last_changed = last_changed
 
     if context is None:
@@ -497,14 +490,24 @@ def state_async_set(self, entity_id: str, new_state: Any,
     state = State(entity_id, new_state, attributes,
                   last_changed, last_updated, context)
 
-    # Only update the latest state if there was no previous state or
-    # if the new state is more recent than the current state
-    if not old_state:
-        self._states[entity_id] = state
-    elif old_state.last_updated and last_updated and old_state.last_updated < last_updated:
+    # Default to the base state changed event
+    event = EVENT_STATE_CHANGED
+
+    if old_state and old_state.state:
+        if old_state.last_updated and last_updated and old_state.last_updated > last_updated:
+            _LOGGER.debug("last_updated of newer state is less than the last_updated of the current state [%s < %s]",
+                          last_updated, old_state.last_updated)
+            event = EVENT_HISTORIC_STATE_CHANGED
+        elif old_state.last_changed and last_changed and old_state.last_changed > last_changed:
+            _LOGGER.debug("last_changed of newer state is less than the last_changed of the current state [%s < %s]",
+                          last_changed, old_state.last_changed)
+            event = EVENT_HISTORIC_STATE_CHANGED
+        else:
+            self._states[entity_id] = state
+    else:
         self._states[entity_id] = state
 
-    self._bus.async_fire(EVENT_STATE_CHANGED, {
+    self._bus.async_fire(event, {
         'entity_id': entity_id,
         'old_state': old_state,
         'new_state': state,

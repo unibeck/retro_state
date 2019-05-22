@@ -2,9 +2,9 @@
 import logging
 from typing import Optional
 
+import homeassistant.helpers.config_validation as cv
+import homeassistant.util.dt as dt_util
 import voluptuous as vol
-
-from homeassistant.core import callback
 from homeassistant.components.sensor import ENTITY_ID_FORMAT, \
     PLATFORM_SCHEMA, DEVICE_CLASSES_SCHEMA
 from homeassistant.const import (
@@ -12,13 +12,12 @@ from homeassistant.const import (
     CONF_ICON_TEMPLATE, CONF_ENTITY_PICTURE_TEMPLATE, ATTR_ENTITY_ID,
     CONF_SENSORS, EVENT_HOMEASSISTANT_START, CONF_FRIENDLY_NAME_TEMPLATE,
     MATCH_ALL, CONF_DEVICE_CLASS)
-from .const import (CONF_LAST_CHANGED_TEMPLATE, CONF_LAST_UPDATED_TEMPLATE)
+from homeassistant.core import callback
+from homeassistant.exceptions import TemplateError
+from homeassistant.helpers.event import async_track_state_change
 
 from custom_components.historic_template.historic_entity import HistoricEntity, async_generate_entity_id
-from homeassistant.exceptions import TemplateError
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.event import async_track_state_change
-import homeassistant.util.dt as dt_util
+from .const import (CONF_LAST_CHANGED_TEMPLATE, CONF_LAST_UPDATED_TEMPLATE)
 
 _LOGGER = logging.getLogger(__name__)
 

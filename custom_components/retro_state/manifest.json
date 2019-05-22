@@ -1,8 +1,8 @@
 {
-  "domain": "blueprint",
-  "name": "Blueprint",
+  "domain": "retro_state",
+  "name": "Retro State",
   "documentation": "https://github.com/custom-components/blueprint/blob/master/README.md",
   "dependencies": [],
-  "codeowners": ["@ludeeus"],
+  "codeowners": ["@jbeckman"],
   "requirements": []
 }
