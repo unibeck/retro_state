@@ -10,7 +10,7 @@ import os
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
-from . import recorder as retro_recorder
+from . import recorder as retro_recorder, influxdb as retro_influxdb
 from .const import (
     DOMAIN_DATA,
     DOMAIN,
@@ -69,8 +69,10 @@ async def async_setup(hass, config):
 def setup_integration(hass, config, platform, platform_config):
     _LOGGER.info("The {} integration for {} is enabled. Setting it up".format(platform, DOMAIN))
 
-    if platform == "recorder":
-        retro_recorder.setup(hass, config)
+    if platform == retro_recorder.BASE_HA_COMPONENT_NAME:
+        retro_recorder.configure(hass, config)
+    elif platform == retro_influxdb.BASE_HA_COMPONENT_NAME:
+        retro_influxdb.configure(hass, config)
     else:
         _LOGGER.warning("{} has not implemented the integration {}".format(DOMAIN, platform))
 

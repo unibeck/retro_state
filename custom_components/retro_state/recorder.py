@@ -16,29 +16,36 @@ from homeassistant.const import (
     ATTR_ENTITY_ID, EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP, EVENT_STATE_CHANGED,
     EVENT_TIME_CHANGED)
 from homeassistant.core import CoreState, callback, HomeAssistant
+from homeassistant.helpers.typing import ConfigType
 from sqlalchemy import exc
 
 from .const import EVENT_HISTORIC_STATE_CHANGED
 
 _LOGGER = logging.getLogger(__name__)
 
-
-def setup(hass: HomeAssistant, config):
-    thread = Thread(target=_async_setup, args=(hass, config, ))
-    thread.start()
+BASE_HA_COMPONENT_NAME = "recorder"
 
 
-def _async_setup(hass: HomeAssistant, config):
+def configure(hass: HomeAssistant, config: ConfigType):
+    if BASE_HA_COMPONENT_NAME in config:
+        thread = Thread(target=_async_setup, args=(hass, config, ))
+        thread.start()
+    else:
+        _LOGGER.critical("You must configure the base HA [%s] in order to use retro_state's [%s] integration",
+                         BASE_HA_COMPONENT_NAME, BASE_HA_COMPONENT_NAME)
+
+
+def _async_setup(hass: HomeAssistant, config: ConfigType):
     # Stop the base HA recorder component.
-    recorder = hass.data["recorder_instance"]
-    recorder.queue.put(None)
-    recorder.join()
-    hass.data["recorder_instance"] = None
+    instance = hass.data[BASE_HA_COMPONENT_NAME + "_instance"]
+    instance.queue.put(None)
+    instance.join()
+    hass.data[BASE_HA_COMPONENT_NAME + "_instance"] = None
 
     # Overwrite the run method of the Recorder class. Then set up the
     # component again
     Recorder.run = _run
-    hass.async_create_task(recorder_async_setup(hass, config["recorder"]))
+    hass.async_create_task(recorder_async_setup(hass, config[BASE_HA_COMPONENT_NAME]))
     return
 
 
