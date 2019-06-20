@@ -20,6 +20,7 @@ from .const import (
     STARTUP,
     VERSION,
     CONF_RECORDER_INTEGRATION,
+    CONF_INFLUXDB_INTEGRATION,
     DEFAULT_NAME,
 )
 
@@ -29,7 +30,8 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Optional(CONF_RECORDER_INTEGRATION, default=False): cv.boolean
+                vol.Optional(CONF_RECORDER_INTEGRATION, default=False): cv.boolean,
+                vol.Optional(CONF_INFLUXDB_INTEGRATION, default=False): cv.boolean
             }
         )
     },
@@ -50,31 +52,42 @@ async def async_setup(hass, config):
     # Create DATA dict
     hass.data[DOMAIN_DATA] = {}
 
-    if not PLATFORMS:
-        _LOGGER.warning("You have enabled {}, but not any integrations.".format(DOMAIN))
+    # Provided retro_state integrations
+    integrations = config[DOMAIN]
 
-    for platform in PLATFORMS:
-        # Get platform specific configuration
-        platform_config = config[DOMAIN].get(platform, {})
+    enabled_integrations = 0
 
-        # If platform is not enabled, skip.
-        if not platform_config:
+    for integration_key, integration_config in integrations.items():
+        # Ensure the integration key is a supported integration. This should never be the case as Home Assistant should
+        # prevent and invalid key from occurring in the config
+        if integration_key not in PLATFORMS:
+            _LOGGER.warning("The provided integration {} is not supported by retro_state, perhaps there is a typo in "
+                            "your config.".format(integration_key))
             continue
 
-        setup_integration(hass, config, platform, platform_config)
+        # If the integration is not enabled, skip it
+        if not integration_config:
+            continue
+
+        enabled_integrations += 1
+        setup_integration(hass, config, integration_key, integration_config)
+
+    if not enabled_integrations:
+        _LOGGER.warning("You have enabled {}, but not any integrations.".format(DOMAIN))
 
     return True
 
 
-def setup_integration(hass, config, platform, platform_config):
-    _LOGGER.info("The {} integration for {} is enabled. Setting it up".format(platform, DOMAIN))
+def setup_integration(hass, config, integration_key, integration_config):
+    _LOGGER.info("The {} integration for {} is enabled. Setting it up...".format(integration_key, DOMAIN))
 
-    if platform == retro_recorder.BASE_HA_COMPONENT_NAME:
+    if integration_key == retro_recorder.BASE_HA_COMPONENT_NAME:
         retro_recorder.configure(hass, config)
-    elif platform == retro_influxdb.BASE_HA_COMPONENT_NAME:
+    elif integration_key == retro_influxdb.BASE_HA_COMPONENT_NAME:
         retro_influxdb.configure(hass, config)
     else:
-        _LOGGER.warning("{} has not implemented the integration {}".format(DOMAIN, platform))
+        # Once again, should never get to this spot, but it HA changes we have a breadcrumb to help debug
+        _LOGGER.warning("{} has not implemented the integration [{}].".format(DOMAIN, integration_key))
 
 
 async def check_files(hass):

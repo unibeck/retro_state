@@ -2,14 +2,16 @@
 # Base component constants
 DOMAIN = "retro_state"
 DOMAIN_DATA = "{}_data".format(DOMAIN)
-VERSION = "1.0.0"
+VERSION = "1.1.3"
 PLATFORMS = [
-    "recorder"
+    "recorder",
+    "influxdb"
 ]
 REQUIRED_FILES = [
     "const.py",
     "manifest.json",
-    "recorder.py"
+    "recorder.py",
+    "influxdb.py"
 ]
 ISSUE_URL = "https://gitlab.com/jbeckman/retro_state/issues"
 
@@ -34,6 +36,7 @@ BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 
 # Configuration
 CONF_RECORDER_INTEGRATION = "recorder"
+CONF_INFLUXDB_INTEGRATION = "influxdb"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

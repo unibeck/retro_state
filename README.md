@@ -14,7 +14,7 @@ Enabling these can partially or completely override the default behavior of the 
 while debugging associated components.
 
 This project also provides components to _create_ states that can occur in the past. Currently, only [historic_template](#Historic Template Component)
-is implemented, though it is quite flexible. However, you can use the `historic_template` component as an example to 
+is implemented, though it is quite flexible. Devs can use the `historic_template` component as an example to 
 build your own component.
 
 ## Base HA Component Integrations
@@ -23,12 +23,16 @@ The example below enables all the available component integrations:
 ```
 retro_state:
   recorder: enable
+  influxdb: enable
 ```
 
-There are somethings to be aware of when enabling these integrations:
+There are some things to be aware of when enabling these integrations:
 - Recorder
   - This component stops the base HA recorder component and starts a new one with several additions.
   During this switch there may be some events that are not captured and saved to the db.
+- InfluxDB
+  - This component stops the base HA influxdb component and starts a new one with several additions.
+  During this switch there may be some events that are not captured and saved to influxdb.
 
 ## Historic Template Component
 

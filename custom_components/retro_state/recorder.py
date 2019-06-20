@@ -31,7 +31,7 @@ def configure(hass: HomeAssistant, config: ConfigType):
         thread = Thread(target=_async_setup, args=(hass, config, ))
         thread.start()
     else:
-        _LOGGER.critical("You must configure the base HA [%s] in order to use retro_state's [%s] integration",
+        _LOGGER.warning("You must configure the base HA [%s] in order to use retro_state's [%s] integration.",
                          BASE_HA_COMPONENT_NAME, BASE_HA_COMPONENT_NAME)
 
 
