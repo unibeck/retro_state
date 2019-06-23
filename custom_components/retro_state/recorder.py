@@ -19,7 +19,7 @@ from homeassistant.core import CoreState, callback, HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from sqlalchemy import exc
 
-from .const import EVENT_HISTORIC_STATE_CHANGED
+from .const import EVENT_HISTORIC_STATE_CHANGED, DOMAIN as RETRO_STATE_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,17 +34,33 @@ def configure(hass: HomeAssistant, config: ConfigType):
 
 
 def _async_setup(hass: HomeAssistant, config: ConfigType):
-    # Stop the base HA recorder component
-    instance = hass.data[DOMAIN + "_instance"]
-    instance.queue.put(None)
-    instance.join()
-    hass.data[DOMAIN + "_instance"] = None
+    instance = None
+    wait_attempts = 0
+
+    # Wait up to 60 seconds (5 sec sleep * 12 attempts) for recorder component to start
+    while wait_attempts < 12 and not instance:
+        wait_attempts += 1
+        try:
+            instance = hass.data[DOMAIN + "_instance"]
+        except KeyError:
+            _LOGGER.info("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
+                         DOMAIN)
+            time.sleep(5)
+        else:
+            # Stop the base HA recorder component
+            instance.queue.put(None)
+            instance.join()
+            hass.data[DOMAIN + "_instance"] = None
+            _LOGGER.info("Stopped the base HA [%s] component", DOMAIN)
+
+    if not instance:
+        _LOGGER.warning("The base HA [%s] component was not started after 60 seconds", DOMAIN)
 
     # Overwrite the run method of the Recorder class. Then set up the
     # component again
     Recorder.run = _run
-    # TODO: Check that we want to pull the component's config off of the greater config
-    hass.async_create_task(recorder_async_setup(hass, config[DOMAIN]))
+    _LOGGER.info("Starting %s's [%s] integration", RETRO_STATE_DOMAIN, DOMAIN)
+    hass.async_create_task(recorder_async_setup(hass, config))
     return
 
 
