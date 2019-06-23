@@ -24,7 +24,7 @@ from homeassistant.helpers import state as state_helper, event as event_helper
 from homeassistant.helpers.entity_values import EntityValues
 from homeassistant.helpers.typing import ConfigType
 
-from .const import EVENT_HISTORIC_STATE_CHANGED
+from .const import EVENT_HISTORIC_STATE_CHANGED, DOMAIN as RETRO_STATE_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,18 +48,21 @@ def _async_setup(hass: HomeAssistant, config: ConfigType):
         try:
             instance = hass.data[DOMAIN]
         except KeyError:
-            if wait_attempts < 12:
-                _LOGGER.info("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
-                             DOMAIN)
-                time.sleep(5)
-                pass
+            _LOGGER.info("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
+                         DOMAIN)
+            time.sleep(5)
+        else:
+            # Stop the base HA influxdb component
+            instance.queue.put(None)
+            instance.join()
+            hass.data[DOMAIN] = None
+            _LOGGER.info("Stopped the base HA [%s] component", DOMAIN)
 
-    # Stop the base HA influxdb component
-    instance.queue.put(None)
-    instance.join()
-    hass.data[DOMAIN] = None
+    if not instance:
+        _LOGGER.warning("The base HA [%s] component was not started after 60 seconds", DOMAIN)
 
     # Run the modified setup function
+    _LOGGER.info("Starting %s's [%s] integration", RETRO_STATE_DOMAIN, DOMAIN)
     _setup(hass, config)
     return
 

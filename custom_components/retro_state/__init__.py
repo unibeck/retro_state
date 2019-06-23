@@ -81,9 +81,9 @@ async def async_setup(hass, config):
 def setup_integration(hass, config, integration_key, integration_config):
     _LOGGER.info("The {} integration for {} is enabled. Setting it up...".format(integration_key, DOMAIN))
 
-    if integration_key == retro_recorder.BASE_HA_COMPONENT_NAME:
+    if integration_key == retro_recorder.DOMAIN:
         retro_recorder.configure(hass, config)
-    elif integration_key == retro_influxdb.BASE_HA_COMPONENT_NAME:
+    elif integration_key == retro_influxdb.DOMAIN:
         retro_influxdb.configure(hass, config)
     else:
         # Once again, should never get to this spot, but if HA changes we have a breadcrumb to help debug
