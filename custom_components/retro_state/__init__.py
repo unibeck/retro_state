@@ -58,11 +58,11 @@ async def async_setup(hass, config):
     enabled_integrations = 0
 
     for integration_key, integration_config in integrations.items():
-        # Ensure the integration key is a supported integration. This should never be the case as Home Assistant should
-        # prevent and invalid key from occurring in the config
+        # Ensure the integration key is a supported integration. This should never be the case as Home Assistant
+        # prevents invalid keys from occurring in the config
         if integration_key not in PLATFORMS:
-            _LOGGER.warning("The provided integration {} is not supported by retro_state, perhaps there is a typo in "
-                            "your config.".format(integration_key))
+            _LOGGER.warning("The provided integration {} is not supported by {}, perhaps there is a typo in "
+                            "your config.".format(integration_key, DOMAIN))
             continue
 
         # If the integration is not enabled, skip it
@@ -86,7 +86,7 @@ def setup_integration(hass, config, integration_key, integration_config):
     elif integration_key == retro_influxdb.BASE_HA_COMPONENT_NAME:
         retro_influxdb.configure(hass, config)
     else:
-        # Once again, should never get to this spot, but it HA changes we have a breadcrumb to help debug
+        # Once again, should never get to this spot, but if HA changes we have a breadcrumb to help debug
         _LOGGER.warning("{} has not implemented the integration [{}].".format(DOMAIN, integration_key))
 
 

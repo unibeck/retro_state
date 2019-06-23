@@ -6,15 +6,15 @@
 """
 
 import logging
+import time
 from threading import Thread
 
 import math
 import requests
-from homeassistant.components.influxdb import InfluxThread, setup as influxdb_setup, CONF_DB_NAME, TIMEOUT, CONF_TAGS, \
+from homeassistant.components.influxdb import InfluxThread, CONF_DB_NAME, TIMEOUT, CONF_TAGS, \
     CONF_TAGS_ATTRIBUTES, CONF_DEFAULT_MEASUREMENT, CONF_OVERRIDE_MEASUREMENT, CONF_COMPONENT_CONFIG, \
     CONF_COMPONENT_CONFIG_DOMAIN, CONF_COMPONENT_CONFIG_GLOB, CONF_RETRY_COUNT, RETRY_INTERVAL, RE_DIGIT_TAIL, \
     RE_DECIMAL, DOMAIN
-from homeassistant.components.recorder import Recorder, async_setup as recorder_async_setup
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP, CONF_VERIFY_SSL, CONF_HOST, CONF_PORT, CONF_USERNAME, CONF_PASSWORD, CONF_SSL,
     CONF_INCLUDE,
@@ -28,27 +28,39 @@ from .const import EVENT_HISTORIC_STATE_CHANGED
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_HA_COMPONENT_NAME = "influxdb"
-
 
 def configure(hass: HomeAssistant, config: ConfigType):
-    if BASE_HA_COMPONENT_NAME in config:
+    if DOMAIN in config:
         thread = Thread(target=_async_setup, args=(hass, config, ))
         thread.start()
     else:
         _LOGGER.warning("You must configure the base HA [%s] in order to use retro_state's [%s] integration.",
-                         BASE_HA_COMPONENT_NAME, BASE_HA_COMPONENT_NAME)
+                        DOMAIN, DOMAIN)
 
 
 def _async_setup(hass: HomeAssistant, config: ConfigType):
-    # Stop the base HA influxdb component.
-    instance = hass.data[BASE_HA_COMPONENT_NAME + "_instance"]
+    instance = None
+    wait_attempts = 0
+
+    # Wait up to 60 seconds (5 sec sleep * 12 attempts) for influxdb component to start
+    while wait_attempts < 12 and not instance:
+        wait_attempts += 1
+        try:
+            instance = hass.data[DOMAIN]
+        except KeyError:
+            if wait_attempts < 12:
+                _LOGGER.info("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
+                             DOMAIN)
+                time.sleep(5)
+                pass
+
+    # Stop the base HA influxdb component
     instance.queue.put(None)
     instance.join()
-    hass.data[BASE_HA_COMPONENT_NAME + "_instance"] = None
+    hass.data[DOMAIN] = None
 
     # Run the modified setup function
-    _setup(hass, config[BASE_HA_COMPONENT_NAME])
+    _setup(hass, config)
     return
 
 

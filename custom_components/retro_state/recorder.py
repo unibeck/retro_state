@@ -8,7 +8,7 @@ from threading import Thread
 
 import homeassistant.util.dt as dt_util
 from homeassistant.components import persistent_notification
-from homeassistant.components.recorder import CONNECT_RETRY_WAIT, PurgeTask, migration, purge
+from homeassistant.components.recorder import CONNECT_RETRY_WAIT, PurgeTask, migration, purge, DOMAIN
 from homeassistant.components.recorder import Recorder, async_setup as recorder_async_setup
 from homeassistant.components.recorder.models import States, Events
 from homeassistant.components.recorder.util import session_scope
@@ -23,29 +23,28 @@ from .const import EVENT_HISTORIC_STATE_CHANGED
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_HA_COMPONENT_NAME = "recorder"
-
 
 def configure(hass: HomeAssistant, config: ConfigType):
-    if BASE_HA_COMPONENT_NAME in config:
+    if DOMAIN in config:
         thread = Thread(target=_async_setup, args=(hass, config, ))
         thread.start()
     else:
         _LOGGER.warning("You must configure the base HA [%s] in order to use retro_state's [%s] integration.",
-                         BASE_HA_COMPONENT_NAME, BASE_HA_COMPONENT_NAME)
+                        DOMAIN, DOMAIN)
 
 
 def _async_setup(hass: HomeAssistant, config: ConfigType):
-    # Stop the base HA recorder component.
-    instance = hass.data[BASE_HA_COMPONENT_NAME + "_instance"]
+    # Stop the base HA recorder component
+    instance = hass.data[DOMAIN + "_instance"]
     instance.queue.put(None)
     instance.join()
-    hass.data[BASE_HA_COMPONENT_NAME + "_instance"] = None
+    hass.data[DOMAIN + "_instance"] = None
 
     # Overwrite the run method of the Recorder class. Then set up the
     # component again
     Recorder.run = _run
-    hass.async_create_task(recorder_async_setup(hass, config[BASE_HA_COMPONENT_NAME]))
+    # TODO: Check that we want to pull the component's config off of the greater config
+    hass.async_create_task(recorder_async_setup(hass, config[DOMAIN]))
     return
 
 

@@ -28,11 +28,13 @@ retro_state:
 
 There are some things to be aware of when enabling these integrations:
 - Recorder
-  - This component stops the base HA recorder component and starts a new one with several additions.
-  During this switch there may be some events that are not captured and saved to the db.
+  - This integration stops the base HA recorder component and starts a new one with several additions.
+  During this switch there may be some events that are not captured and saved to the db
 - InfluxDB
-  - This component stops the base HA influxdb component and starts a new one with several additions.
-  During this switch there may be some events that are not captured and saved to influxdb.
+  - Waits up to 60 seconds for the base influxdb component to start. This is to ensure that the base component and 
+  retro_state integration are not running at the same time
+  - Stops the base HA influxdb component and starts a new one with several additions.
+  During this switch there may be some events that are not captured and saved to influxdb
 
 ## Historic Template Component
 
@@ -63,3 +65,34 @@ There are a few major pieces that make this all work:
   - An event that fires when a state has occurred in the past within this retro_state's framework
   - The component integrations listen for this event and integrate it respectively
   - You should not need to manually fire this event
+
+### Demo Config
+
+Use the following configuration snippet to get started with testing all integrations:
+```
+recorder:
+
+influxdb:
+  database: hass
+
+sensor:
+  - platform: historic_template
+    sensors:
+      f150_truck_rpm:
+        value_template: '{{ states.sensor.f150_truck_data.attributes["rpm"] }}'
+        last_updated_template: '{{ states.sensor.f150_truck_data.attributes["client_dt"] }}'
+        unit_of_measurement: 'RPM'
+
+retro_state:
+  recorder: enable
+  influxdb: enable
+```
+
+If you don't already have a InfluxDB instance running, you can spin one up with docker:
+```
+docker run --name influxdb -d --rm \
+    -p 8086:8086 \
+    -e INFLUXDB_DB=hass \
+    -v influxdb:/var/lib/influxdb \
+    influxdb:1.7.6
+```
