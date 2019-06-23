@@ -14,7 +14,7 @@ import requests
 from homeassistant.components.influxdb import InfluxThread, CONF_DB_NAME, TIMEOUT, CONF_TAGS, \
     CONF_TAGS_ATTRIBUTES, CONF_DEFAULT_MEASUREMENT, CONF_OVERRIDE_MEASUREMENT, CONF_COMPONENT_CONFIG, \
     CONF_COMPONENT_CONFIG_DOMAIN, CONF_COMPONENT_CONFIG_GLOB, CONF_RETRY_COUNT, RETRY_INTERVAL, RE_DIGIT_TAIL, \
-    RE_DECIMAL, DOMAIN
+    RE_DECIMAL, DOMAIN, CONFIG_SCHEMA
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP, CONF_VERIFY_SSL, CONF_HOST, CONF_PORT, CONF_USERNAME, CONF_PASSWORD, CONF_SSL,
     CONF_INCLUDE,
@@ -61,9 +61,12 @@ def _async_setup(hass: HomeAssistant, config: ConfigType):
     if not instance:
         _LOGGER.warning("The base HA [%s] component was not started after 60 seconds", DOMAIN)
 
+    # Process the config to fill in defaults
+    processed_config = CONFIG_SCHEMA(config)
+
     # Run the modified setup function
     _LOGGER.info("Starting %s's [%s] integration", RETRO_STATE_DOMAIN, DOMAIN)
-    _setup(hass, config)
+    _setup(hass, processed_config)
     return
 
 

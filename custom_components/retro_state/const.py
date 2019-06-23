@@ -2,7 +2,7 @@
 # Base component constants
 DOMAIN = "retro_state"
 DOMAIN_DATA = "{}_data".format(DOMAIN)
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 PLATFORMS = [
     "recorder",
     "influxdb"
