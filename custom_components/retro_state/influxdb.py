@@ -48,7 +48,7 @@ def _async_setup(hass: HomeAssistant, config: ConfigType):
         try:
             instance = hass.data[DOMAIN]
         except KeyError:
-            _LOGGER.info("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
+            _LOGGER.debug("Waiting for the base HA [%s] component to start. Sleeping for five seconds...",
                          DOMAIN)
             time.sleep(5)
         else:
@@ -56,7 +56,7 @@ def _async_setup(hass: HomeAssistant, config: ConfigType):
             instance.queue.put(None)
             instance.join()
             hass.data[DOMAIN] = None
-            _LOGGER.info("Stopped the base HA [%s] component", DOMAIN)
+            _LOGGER.debug("Stopped the base HA [%s] component", DOMAIN)
 
     if not instance:
         _LOGGER.warning("The base HA [%s] component was not started after 60 seconds", DOMAIN)
@@ -65,7 +65,7 @@ def _async_setup(hass: HomeAssistant, config: ConfigType):
     processed_config = CONFIG_SCHEMA(config)
 
     # Run the modified setup function
-    _LOGGER.info("Starting %s's [%s] integration", RETRO_STATE_DOMAIN, DOMAIN)
+    _LOGGER.debug("Starting %s's [%s] integration", RETRO_STATE_DOMAIN, DOMAIN)
     _setup(hass, processed_config)
     return
 
@@ -224,6 +224,7 @@ def _setup(hass, config):
 
     instance = hass.data[DOMAIN] = InfluxThread(
         hass, influx, event_to_json, max_tries)
+    hass.bus.listen(EVENT_HISTORIC_STATE_CHANGED, instance._event_listener)
     instance.start()
 
     def shutdown(event):

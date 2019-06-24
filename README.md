@@ -27,14 +27,10 @@ retro_state:
 ```
 
 There are some things to be aware of when enabling these integrations:
-- Recorder
-  - This integration stops the base HA recorder component and starts a new one with several additions.
-  During this switch there may be some events that are not captured and saved to the db
-- InfluxDB
-  - Waits up to 60 seconds for the base influxdb component to start. This is to ensure that the base component and 
-  retro_state integration are not running at the same time
-  - Stops the base HA influxdb component and starts a new one with several additions.
-  During this switch there may be some events that are not captured and saved to influxdb
+- Retro_state will wait up to 60 seconds for the base component to start. This is to ensure that the base component and 
+retro_state integration are not running at the same time
+- Retro_state will stop the base component, then start retro_stats's updated version that supports historic states. 
+During this switch there may be some events that are not captured by the enabled component
 
 ## Historic Template Component
 
@@ -69,7 +65,7 @@ There are a few major pieces that make this all work:
 ### Demo Config
 
 Use the following configuration snippet to get started with testing all integrations:
-```
+```yaml
 recorder:
 
 influxdb:
@@ -86,6 +82,12 @@ sensor:
 retro_state:
   recorder: enable
   influxdb: enable
+  
+logger:
+    default: info
+    logs:
+        custom_components.historic_template: debug
+        custom_components.retro_state: debug
 ```
 
 If you don't already have a InfluxDB instance running, you can spin one up with docker:
@@ -95,4 +97,22 @@ docker run --name influxdb -d --rm \
     -e INFLUXDB_DB=hass \
     -v influxdb:/var/lib/influxdb \
     influxdb:1.7.6
+```
+
+### Manual Test
+
+You can test these integrations with the curl command below. Note that this command is based on the aforementioned demo 
+config and that you need to supply your own bearer token.
+```bash
+curl -X POST \
+  http://localhost:8123/api/states/sensor.f150_truck_data \
+  -H "Authorization: Bearer ${HASS_TOKEN}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d '{
+        "state": "OK",
+        "attributes": {
+          "rpm": "824",
+          "client_dt": "2019-06-21T22:45:59.869726+00:00"
+        }
+      }'
 ```
